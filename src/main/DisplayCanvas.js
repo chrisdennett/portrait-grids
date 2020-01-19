@@ -22,18 +22,6 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
       };
       image.src = "img/sample-397x480.png";
     } else {
-      const { w, h } = drawCanvas(
-        sourceImg,
-        canvasRef.current,
-        sizeInfo.width,
-        sizeInfo.height
-      );
-      const x = (sizeInfo.width - w) / 2;
-      const y = (sizeInfo.height - h) / 2;
-
-      setCanvasX(x);
-      setCanvasY(y);
-
       ImageHelper.drawImageToCanvas(
         {
           sourceImg,
@@ -59,6 +47,8 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
     const paddingForText = 30;
 
     const cannyCanvas = document.createElement("canvas");
+    //const getCanvasDimensions = (source, targetCanvas, maxTargetWidth, maxTargetHeight)
+
     const width = sourceImg.width;
     const height = sourceImg.height;
     cannyCanvas.width = width;
@@ -105,8 +95,22 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
     ctx.putImageData(image_data, 0, 0);
 
     const outputCtx = canvasRef.current.getContext("2d");
-    canvasRef.current.width = width;
-    canvasRef.current.height = height;
+
+    const canvasDimensions = getCanvasDimensions(
+      sourceImg,
+      canvasRef.current,
+      sizeInfo.width,
+      sizeInfo.height
+    );
+
+    const x = (sizeInfo.width - canvasDimensions.width) / 2;
+    const y = (sizeInfo.height - canvasDimensions.height) / 2;
+
+    setCanvasX(x);
+    setCanvasY(y);
+
+    canvasRef.current.width = canvasDimensions.width;
+    canvasRef.current.height = canvasDimensions.height;
 
     if (appData.showSourceImage) {
       outputCtx.globalCompositeOperation = "color-burn";
@@ -114,8 +118,8 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
         sourceImg,
         paddingForText,
         paddingForText,
-        width - paddingForText,
-        height - paddingForText
+        canvasDimensions.width - paddingForText,
+        canvasDimensions.height - paddingForText
       );
     }
 
@@ -124,8 +128,8 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
         cannyCanvas,
         paddingForText,
         paddingForText,
-        width - paddingForText,
-        height - paddingForText
+        canvasDimensions.width - paddingForText,
+        canvasDimensions.height - paddingForText
       );
     }
 
@@ -187,7 +191,12 @@ const drawGrid = (squaresPerRow, canvas, gutterSize, fontSize = 20) => {
   ctx.stroke();
 };
 
-const drawCanvas = (source, targetCanvas, maxTargetWidth, maxTargetHeight) => {
+const getCanvasDimensions = (
+  source,
+  targetCanvas,
+  maxTargetWidth,
+  maxTargetHeight
+) => {
   const ctx = targetCanvas.getContext("2d");
 
   const sourceW = source.width;
@@ -211,15 +220,43 @@ const drawCanvas = (source, targetCanvas, maxTargetWidth, maxTargetHeight) => {
     w = h * heightToWidthRatio;
   }
 
-  targetCanvas.width = w;
-  targetCanvas.height = h;
-
-  //	context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);
-  ctx.drawImage(source, 0, 0, sourceW, sourceH, 0, 0, w, h);
-
   // return the output width and height so it can be used to position canvas
-  return { w, h };
+  return { width: w, height: h };
 };
+
+// const drawCanvas = (source, targetCanvas, maxTargetWidth, maxTargetHeight) => {
+//   const ctx = targetCanvas.getContext("2d");
+
+//   const sourceW = source.width;
+//   const sourceH = source.height;
+
+//   // limit maximum size to source image size (i.e. don't increase size)
+//   const maxWidth = Math.min(maxTargetWidth, sourceW);
+//   const maxHeight = Math.min(maxTargetHeight, sourceH);
+
+//   const widthToHeightRatio = sourceH / sourceW;
+//   const heightToWidthRatio = sourceW / sourceH;
+
+//   // set size based on max width
+//   let w = maxWidth;
+//   let h = w * widthToHeightRatio;
+
+//   // if that makes the h bigger than max
+//   if (h > maxHeight) {
+//     // set size based on max height
+//     h = maxHeight;
+//     w = h * heightToWidthRatio;
+//   }
+
+//   targetCanvas.width = w;
+//   targetCanvas.height = h;
+
+//   //	context.drawImage(img,sx,sy,swidth,sheight,x,y,width,height);
+//   ctx.drawImage(source, 0, 0, sourceW, sourceH, 0, 0, w, h);
+
+//   // return the output width and height so it can be used to position canvas
+//   return { w, h };
+// };
 
 const CanvasHolder = styled.div`
   position: absolute;

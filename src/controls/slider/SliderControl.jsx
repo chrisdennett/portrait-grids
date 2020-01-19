@@ -35,12 +35,11 @@ const SliderControl = ({
 
   // only return array if there are multiple values
   const onSliderUpdate = values => {
-    console.log("SLIDER values: ", values);
     onChange(values.length > 1 ? values : values[0]);
   };
 
   return (
-    <div style={{ height: 60, width: "100%" }}>
+    <div style={{ height: 50, width: "100%" }}>
       <SliderLabel
         use={"button"}
         tag={"div"}
