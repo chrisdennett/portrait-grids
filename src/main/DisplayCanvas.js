@@ -3,23 +3,24 @@ import { saveAs } from "file-saver";
 import toBlob from "canvas-to-blob";
 import styled from "styled-components";
 import * as jsfeat from "./jsfeat";
+// helpers
+import * as ImageHelper from "./ImageHelper";
 
-const DisplayCanvas = ({ sizeInfo }) => {
+const DisplayCanvas = ({ sizeInfo, appData }) => {
   const [sourceImg, setSourceImg] = useState(null);
   const [canvasX, setCanvasX] = useState(0);
   const [canvasY, setCanvasY] = useState(0);
+  // const [blurRadius, setBlurRadius] = useState(2);
+  // const [highThreshold, setHighThreshold] = useState(20);
+  // const [lowThreshold, setLowThreshold] = useState(70);
+  //const [showSourceImage, setShowSourceImage] = useState(false);
+  //const [showSourceSheetGrid, setShowSourceSheetGrid] = useState(true);
+  //const [showSourceSheetOutlines, setShowSourceSheetOutlines] = useState(true);
+  // const [showDrawingSheet, setShowDrawingSheet] = useState(true);
+  // const [showDrawingSheetGrid, setShowDrawingSheetGrid] = useState(true);
+  // const [showDrawingSheetOutlines, setShowDrawingSheetOutlines] = useState(true);
   const canvasRef = React.useRef(null);
-  const [blurRadius, setBlurRadius] = useState(2);
-  const [highThreshold, setHighThreshold] = useState(20);
-  const [lowThreshold, setLowThreshold] = useState(70);
-  const [showSourceImage, setShowSourceImage] = useState(false);
-  const [showSourceSheetGrid, setShowSourceSheetGrid] = useState(true);
-  const [showSourceSheetOutlines, setShowSourceSheetOutlines] = useState(true);
-  const [showDrawingSheet, setShowDrawingSheet] = useState(true);
-  const [showDrawingSheetGrid, setShowDrawingSheetGrid] = useState(true);
-  const [showDrawingSheetOutlines, setShowDrawingSheetOutlines] = useState(
-    true
-  );
+  const sourceCanvas = React.useRef(null);
 
   useEffect(() => {
     if (!sourceImg) {
@@ -41,6 +42,18 @@ const DisplayCanvas = ({ sizeInfo }) => {
 
       setCanvasX(x);
       setCanvasY(y);
+
+      ImageHelper.drawImageToCanvas(
+        {
+          sourceImg,
+          outputCanvas: canvasRef.current,
+          orientation: 1,
+          maxOutputWidth: 480
+        },
+        () => {
+          updateCannyFilter();
+        }
+      );
     }
   }, [sourceImg, sizeInfo]);
 
@@ -52,25 +65,16 @@ const DisplayCanvas = ({ sizeInfo }) => {
   };
 
   const updateCannyFilter = () => {
-    const {
-      blurRadius,
-      lowThreshold,
-      highThreshold,
-      showSourceImage,
-      showSourceSheetGrid,
-      showSourceSheetOutlines
-    } = this.state;
-
     const paddingForText = 30;
 
-    this.cannyCanvas = document.createElement("canvas");
-    const width = this.sourceCanvas.width;
-    const height = this.sourceCanvas.height;
-    this.cannyCanvas.width = width;
-    this.cannyCanvas.height = height;
+    const cannyCanvas = document.createElement("canvas");
+    const width = sourceImg.width;
+    const height = sourceImg.height;
+    cannyCanvas.width = width;
+    cannyCanvas.height = height;
 
-    ImageHelper.drawToCanvas(this.sourceCanvas, this.cannyCanvas);
-    const ctx = this.cannyCanvas.getContext("2d");
+    ImageHelper.drawToCanvas(sourceImg, cannyCanvas);
+    const ctx = cannyCanvas.getContext("2d");
     const image_data = ctx.getImageData(0, 0, width, height);
 
     const gray_img = new jsfeat.matrix_t(
@@ -81,10 +85,15 @@ const DisplayCanvas = ({ sizeInfo }) => {
     const code = jsfeat.COLOR_RGBA2GRAY;
     jsfeat.imgproc.grayscale(image_data.data, width, height, gray_img, code);
 
-    const kernel_size = (blurRadius + 1) << 1;
+    const kernel_size = (appData.blurRadius + 1) << 1;
     jsfeat.imgproc.gaussian_blur(gray_img, gray_img, kernel_size, 0);
 
-    jsfeat.imgproc.canny(gray_img, gray_img, lowThreshold, highThreshold);
+    jsfeat.imgproc.canny(
+      gray_img,
+      gray_img,
+      appData.lowThreshold,
+      appData.highThreshold
+    );
 
     // render result back to canvas
     const data_u32 = new Uint32Array(image_data.data.buffer);
@@ -104,14 +113,14 @@ const DisplayCanvas = ({ sizeInfo }) => {
 
     ctx.putImageData(image_data, 0, 0);
 
-    const outputCtx = this.canvas.getContext("2d");
-    this.canvas.width = width;
-    this.canvas.height = height;
+    const outputCtx = canvasRef.current.getContext("2d");
+    canvasRef.current.width = width;
+    canvasRef.current.height = height;
 
-    if (showSourceImage) {
+    if (appData.showSourceImage) {
       outputCtx.globalCompositeOperation = "color-burn";
       outputCtx.drawImage(
-        this.sourceCanvas,
+        sourceCanvas.current,
         paddingForText,
         paddingForText,
         width - paddingForText,
@@ -119,9 +128,9 @@ const DisplayCanvas = ({ sizeInfo }) => {
       );
     }
 
-    if (showSourceSheetOutlines) {
+    if (appData.showSourceSheetOutlines) {
       outputCtx.drawImage(
-        this.cannyCanvas,
+        cannyCanvas,
         paddingForText,
         paddingForText,
         width - paddingForText,
@@ -129,21 +138,66 @@ const DisplayCanvas = ({ sizeInfo }) => {
       );
     }
 
-    if (showSourceSheetGrid) {
-      drawGrid(10, this.canvas, paddingForText);
+    if (appData.showSourceSheetGrid) {
+      drawGrid(10, canvasRef.current, paddingForText);
     }
   };
 
   return (
     <Container>
       <CanvasHolder left={canvasX} top={canvasY}>
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef} width={300} height={300} />
+      </CanvasHolder>
+      <CanvasHolder left={canvasX} top={canvasY}>
+        <canvas ref={sourceCanvas} width={300} height={300} />
       </CanvasHolder>
     </Container>
   );
 };
 
 export default DisplayCanvas;
+
+const drawGrid = (squaresPerRow, canvas, gutterSize, fontSize = 20) => {
+  // add numbers and letters
+  // add letters across the top and numbers down.
+  // need to make the canvas slightly bigger than the source.
+  const lettersString = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  const letters = { ...lettersString };
+
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.beginPath();
+
+  const gridSquareSize = (width - gutterSize) / squaresPerRow;
+  let xPos, yPos, digit;
+  ctx.font = `${fontSize}px Verdana`;
+  const sqaureTextMiddle = gridSquareSize / 2 - fontSize / 2;
+
+  for (let i = 0; i <= squaresPerRow; i++) {
+    xPos = gutterSize + i * gridSquareSize;
+    ctx.moveTo(xPos, gutterSize);
+    ctx.lineTo(xPos, height);
+
+    // label
+    digit = i < lettersString.length ? letters[i] : "0h";
+    ctx.fillText(digit, xPos + sqaureTextMiddle, fontSize);
+  }
+
+  const squaresDown = Math.ceil(height / gridSquareSize);
+  for (let j = 0; j <= squaresDown; j++) {
+    yPos = gutterSize + j * gridSquareSize;
+    ctx.moveTo(gutterSize, yPos);
+    ctx.lineTo(width, yPos);
+
+    // label
+    let digitXPos = j > 9 ? 0 : gutterSize - fontSize; // v rough positioning
+    ctx.fillText(String(j), digitXPos, yPos + fontSize + sqaureTextMiddle);
+  }
+
+  ctx.stroke();
+};
 
 const drawCanvas = (source, targetCanvas, maxTargetWidth, maxTargetHeight) => {
   const ctx = targetCanvas.getContext("2d");
@@ -180,9 +234,9 @@ const drawCanvas = (source, targetCanvas, maxTargetWidth, maxTargetHeight) => {
 };
 
 const CanvasHolder = styled.div`
-  position: absolute;
-  left: ${props => props.left}px;
-  top: ${props => props.top}px;
+  /* position: absolute; */
+  /* left: ${props => props.left}px; */
+  /* top: ${props => props.top}px; */
   line-height: 0;
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22);
 `;
