@@ -4,6 +4,7 @@ import styled from "styled-components";
 import "@material/checkbox/dist/mdc.checkbox.css";
 import "@material/form-field/dist/mdc.form-field.css";
 import { Checkbox } from "@rmwc/checkbox";
+import SliderControl from "./slider/SliderControl";
 
 const TopBar = ({ appData, onUpdate }) => {
   return (
@@ -32,36 +33,57 @@ const TopBar = ({ appData, onUpdate }) => {
           })
         }
       />
-      <Checkbox
-        label="showDrawingSheet"
-        checked={appData.showDrawingSheet}
-        onChange={e =>
-          onUpdate({
-            ...appData,
-            showDrawingSheet: e.currentTarget.checked
-          })
-        }
-      />
-      <Checkbox
-        label="showDrawingSheetGrid"
-        checked={appData.showDrawingSheetGrid}
-        onChange={e =>
-          onUpdate({
-            ...appData,
-            showDrawingSheetGrid: e.currentTarget.checked
-          })
-        }
-      />
-      <Checkbox
-        label="showDrawingSheetOutlines"
-        checked={appData.showDrawingSheetOutlines}
-        onChange={e =>
-          onUpdate({
-            ...appData,
-            showDrawingSheetOutlines: e.currentTarget.checked
-          })
-        }
-      />
+      <SlicerHolder>
+        <SliderControl
+          labelStyle={{ minWidth: 150 }}
+          label={"Blur:"}
+          displayValue={true}
+          step={1}
+          min={1}
+          max={12}
+          value={appData.blurRadius}
+          onChange={value =>
+            onUpdate({
+              ...appData,
+              blurRadius: value
+            })
+          }
+        />
+      </SlicerHolder>
+      <SlicerHolder>
+        <SliderControl
+          labelStyle={{ minWidth: 150 }}
+          label={"highThreshold:"}
+          displayValue={true}
+          step={1}
+          min={0}
+          max={100}
+          value={appData.highThreshold}
+          onChange={value =>
+            onUpdate({
+              ...appData,
+              highThreshold: value
+            })
+          }
+        />
+      </SlicerHolder>
+      <SlicerHolder>
+        <SliderControl
+          labelStyle={{ minWidth: 150 }}
+          label={"lowThreshold:"}
+          displayValue={true}
+          step={1}
+          min={0}
+          max={100}
+          value={appData.lowThreshold}
+          onChange={value =>
+            onUpdate({
+              ...appData,
+              lowThreshold: value
+            })
+          }
+        />
+      </SlicerHolder>
     </Container>
   );
 };
@@ -74,17 +96,17 @@ const Container = styled.div`
   color: black;
 `;
 
+const SlicerHolder = styled.div`
+  padding: 0 10px;
+`;
+
 /*
 const defaultAppData = {
   showSourceImage: false,
   showSourceSheetGrid: true,
   showSourceSheetOutlines: true,
-  showDrawingSheet: true,
-  showDrawingSheetGrid: true,
-  showDrawingSheetOutlines: true,
   blurRadius: 2,
   highThreshold: 20,
   lowThreshold: 70
 };
-
 */

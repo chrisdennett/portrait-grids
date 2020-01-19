@@ -10,17 +10,8 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
   const [sourceImg, setSourceImg] = useState(null);
   const [canvasX, setCanvasX] = useState(0);
   const [canvasY, setCanvasY] = useState(0);
-  // const [blurRadius, setBlurRadius] = useState(2);
-  // const [highThreshold, setHighThreshold] = useState(20);
-  // const [lowThreshold, setLowThreshold] = useState(70);
-  //const [showSourceImage, setShowSourceImage] = useState(false);
-  //const [showSourceSheetGrid, setShowSourceSheetGrid] = useState(true);
-  //const [showSourceSheetOutlines, setShowSourceSheetOutlines] = useState(true);
-  // const [showDrawingSheet, setShowDrawingSheet] = useState(true);
-  // const [showDrawingSheetGrid, setShowDrawingSheetGrid] = useState(true);
-  // const [showDrawingSheetOutlines, setShowDrawingSheetOutlines] = useState(true);
+
   const canvasRef = React.useRef(null);
-  const sourceCanvas = React.useRef(null);
 
   useEffect(() => {
     if (!sourceImg) {
@@ -55,7 +46,7 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
         }
       );
     }
-  }, [sourceImg, sizeInfo]);
+  });
 
   const saveImage = () => {
     const downloadName = `artfly_portrait_grid_source.png`;
@@ -120,7 +111,7 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
     if (appData.showSourceImage) {
       outputCtx.globalCompositeOperation = "color-burn";
       outputCtx.drawImage(
-        sourceCanvas.current,
+        sourceImg,
         paddingForText,
         paddingForText,
         width - paddingForText,
@@ -146,10 +137,7 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
   return (
     <Container>
       <CanvasHolder left={canvasX} top={canvasY}>
-        <canvas ref={canvasRef} width={300} height={300} />
-      </CanvasHolder>
-      <CanvasHolder left={canvasX} top={canvasY}>
-        <canvas ref={sourceCanvas} width={300} height={300} />
+        <canvas ref={canvasRef} />
       </CanvasHolder>
     </Container>
   );
@@ -234,9 +222,9 @@ const drawCanvas = (source, targetCanvas, maxTargetWidth, maxTargetHeight) => {
 };
 
 const CanvasHolder = styled.div`
-  /* position: absolute; */
-  /* left: ${props => props.left}px; */
-  /* top: ${props => props.top}px; */
+  position: absolute;
+  left: ${props => props.left}px;
+  top: ${props => props.top}px;
   line-height: 0;
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22);
 `;
