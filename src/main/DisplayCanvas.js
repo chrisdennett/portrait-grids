@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { saveAs } from "file-saver";
-import toBlob from "canvas-to-blob";
+// import { saveAs } from "file-saver";
 import styled from "styled-components";
 import * as jsfeat from "./jsfeat";
 // helpers
@@ -27,7 +26,7 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
           sourceImg,
           outputCanvas: canvasRef.current,
           orientation: 1,
-          maxOutputWidth: 480
+          maxOutputWidth: 480,
         },
         () => {
           updateCannyFilter();
@@ -36,12 +35,12 @@ const DisplayCanvas = ({ sizeInfo, appData }) => {
     }
   });
 
-  const saveImage = () => {
-    const downloadName = `artfly_portrait_grid_source.png`;
-    this.canvas.toBlob(blob => {
-      saveAs(blob, downloadName);
-    });
-  };
+  // const saveImage = () => {
+  //   const downloadName = `artfly_portrait_grid_source.png`;
+  //   this.canvas.toBlob((blob) => {
+  //     saveAs(blob, downloadName);
+  //   });
+  // };
 
   const updateCannyFilter = () => {
     const paddingForText = 30;
@@ -197,7 +196,7 @@ const getCanvasDimensions = (
   maxTargetWidth,
   maxTargetHeight
 ) => {
-  const ctx = targetCanvas.getContext("2d");
+  // const ctx = targetCanvas.getContext("2d");
 
   const sourceW = source.width;
   const sourceH = source.height;
@@ -260,8 +259,8 @@ const getCanvasDimensions = (
 
 const CanvasHolder = styled.div`
   position: absolute;
-  left: ${props => props.left}px;
-  top: ${props => props.top}px;
+  left: ${(props) => props.left}px;
+  top: ${(props) => props.top}px;
   line-height: 0;
   box-shadow: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22);
 `;
